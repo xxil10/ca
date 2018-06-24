@@ -1,0 +1,64 @@
+#!/bin/sh
+
+initalize() {
+
+	ROOT=$1
+
+	mkdir -p $ROOT/certs 
+	mkdir -p $ROOT/crl
+	mkdir -p $ROOT/csr
+	mkdir -p $ROOT/newcerts
+	mkdir -p $ROOT/private
+
+	chmod 700 $ROOT/private
+
+	touch $ROOT/index.txt
+	touch $ROOT/index.txt.attr
+
+	echo 1000 > $ROOT/serial
+
+	touch $ROOT/crlnumber
+}
+
+generateKey() {
+
+	ROOT=$1
+	NAME=$2
+	LEN=$3
+
+	openssl genrsa -aes256 -out $ROOT/private/$NAME.key.pem $LEN 
+	chmod 400 $ROOT/private/$NAME.key.pem
+}
+
+generateCertificate() {
+
+	CA=$1
+	ROOT=$2
+	NAME=$3
+	DAYS=$4
+
+	openssl req -config $CA/openssl.conf -key $ROOT/private/$NAME.key.pem -new -x509 -days $DAYS -sha256 -extensions v3_ca -out $ROOT/certs/$NAME.cert.pem
+	chmod 444 $ROOT/certs/$NAME.cert.pem
+}
+
+generateCSR() {
+	
+	CA=$1
+	NAME=$2
+	ROOT=$3
+
+	openssl req -config $CA/openssl.conf -new -sha256 -key $ROOT/private/$NAME.key.pem -out $ROOT/csr/$NAME.csr.pem
+}
+
+signCertificate() {
+
+	CA=$1
+	ROOT=$2
+	NAME=$3
+	DAYS=$4
+
+	echo "CA=$CA, ROOT=$ROOT, NAME=$NAME, DAYS=$DAYS"
+
+	openssl ca -config $CA/openssl.conf -extensions v3_intermediate_ca -days $DAYS -notext -md  sha256 -in $ROOT/csr/$NAME.csr.pem -out $ROOT/certs/$NAME.cert.pem
+	chmod 444 $ROOT/certs/$NAME.cert.pem
+}

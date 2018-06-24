@@ -1,0 +1,25 @@
+#!/bin/sh
+
+. ./ca-lib
+
+CA="root/ca"
+INTER=$CA/intermediate
+
+initalize $CA
+
+cp conf/openssl.conf $CA/openssl.conf
+
+generateKey $CA ca 4096
+generateCertificate $CA $CA ca 7300
+
+initalize $INTER
+
+cp conf/openssl.intermediate.conf $INTER/openssl.conf
+
+generateKey $INTER intermediate 4096
+generateCSR $INTER intermediate $INTER
+
+generateCertificate $CA $INTER intermediate 3650
+
+cat $INTER/certs/intermediate.cert.pem $CA/certs/ca.cert.pem > $INTER/certs/ca-chain.cert.pem
+chmod 444 $INTER/certs/ca-chain.cert.pem

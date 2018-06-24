@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. ./ca-lib
+
+if [ "$1" != "" ]; then
+    NAME=$1
+else
+    echo "Usage : $0 <NAME>"
+    exit 1
+fi
+
+CA="root/ca/intermediate"
+ROOT=$CA/$NAME
+
+initalize $ROOT
+
+generateKey $ROOT $NAME 2048
+
+generateCSR $CA $NAME $ROOT
+signCertificate $CA $ROOT $NAME $CA 365 
